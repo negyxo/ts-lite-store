@@ -3,7 +3,7 @@ ts-lite-store
 
 **About**
 
-This is flux based implementation in TypeScript for the React projects. The main goal was to leverage the power of TypeScript and use its type system as much as possible. This is simple library, with simple features, it is smilar to Redux, but it is oriented more to TypeScript than to vanila Javascript users.
+This is flux based implementation in TypeScript for the React projects. The main goal is to leverage the power of TypeScript and use its type system as much as possible. This is simple library, with simple features, it is smilar to Redux, but it is oriented more to TypeScript than to vanila Javascript users.
 
 **Installing**
 
