@@ -4,8 +4,8 @@ import { Store } from "./store";
 import { StoreManager } from "./store.manager";
 import { Subscriber } from "./subscriber";
 
-// this type is used to calculate difference between Map function
-// given properties and the Props of given component
+// this type is used to calculate difference between Map function given
+// properties and the Props of given component
 type Omit<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
 
 export function Connected<
@@ -32,16 +32,14 @@ export function ConnectedWithObserver<
 }
 
 /**
- * This is mixin function for creating React HOC that is used to
- * hook on global store.
- * @param Comp
- * React component to wire with a store.
- * @param Observer
- * An optional observer that can be used to pair with the component
- * @param map
- * A map function, to map Props properties to central store's properties.
- * If observer is used, it is also passed to map function, so observer
- * public functions can be used to map Props action to it
+ * This is mixin function for creating React HOC that is used to hook on global
+ * store.
+ * @param Comp React component to wire with a store.
+ * @param Observer An optional observer that can be used to pair with the
+ * component
+ * @param map A map function, to map Props properties to central store's
+ * properties. If observer is used, it is also passed to map function, so
+ * observer public functions can be used to map Props action to it
  */
 function ConnectedWithObserverInternal<
     TAppState,
@@ -74,11 +72,11 @@ function ConnectedWithObserverInternal<
 
                 // this flag indicates whether the state can be updated via
                 // setState or state direct set. We need to address this because
-                // setState cannot be called before component is mounted but
-                // our Observer can trigger an async function that can call
-                // the update state before the component mount is completed
-                // and in this case react will throw an error and we will
-                // have a missed state change
+                // setState cannot be called before component is mounted but our
+                // Observer can trigger an async function that can call the
+                // update state before the component mount is completed and in
+                // this case react will throw an error and we will have a missed
+                // state change
                 /** @internal */
                 public canSetState = false;
 

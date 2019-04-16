@@ -3,9 +3,9 @@ import { LiteEvent } from "./lite.event";
 import { Observer } from "./observer";
 
 /**
- * Defines subscription to the store. This allows us to listen
- * for state change events and add Observer class that will be
- * automatically removed when this (Subscriber is removed).
+ * Defines subscription to the store. This allows us to listen for state change
+ * events and add Observer class that will be automatically removed when this
+ * (Subscriber is removed).
  */
 export class Subscriber<TAppState = any> {
     constructor(
@@ -24,11 +24,9 @@ export class Subscriber<TAppState = any> {
     public stateChanged: LiteEvent<TAppState>;
 
     /**
-     * Registers Observer object to the store.
-     * Note:
-     * When Observer is registered through Subsrciber (this method)
-     * then it will be also automatically removed when Subscriber is
-     * removed from the store.
+     * Registers Observer object to the store. Note: When Observer is registered
+     * through Subsrciber (this method) then it will be also automatically
+     * removed when Subscriber is removed from the store.
      * @param observer
      */
     public registerObserver(observer: Observer<TAppState>) {
