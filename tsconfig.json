@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "outDir": "./lib",
+        "moduleResolution": "node",
+        "jsx": "react",
+        "sourceMap": false,
+        "removeComments": true,
+        "strict": true,
+        "declaration": true,
+        "lib" : ["es2015", "dom"],
+        "stripInternal": true,
+    },
+    "include": [ "./src" ]
+}

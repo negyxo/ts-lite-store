@@ -1,0 +1,36 @@
+{
+  "name": "ts-lite-store",
+  "version": "1.0.7",
+  "scripts": {
+    "prepublishOnly": "npm run compile",
+    "compile": "npm run clean && tsc -p .",
+    "clean": "del /Q /S lib",
+    "copy": "xcopy package.json lib\\package.json",
+    "test": "mocha --require ts-node/register test/**/*.ts"
+  },
+  "bugs": {
+    "url": "https://github.com/negyxo/ts-lite-store.git"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/negyxo/ts-lite-store.git"
+  },
+  "keywords": [
+    "React", "Flux", "Store"
+  ],
+  "author": "Aleksandar Perkucin",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.6",
+    "chai": "^4.2.0",
+    "mocha": "^6.0.0",
+    "ts-node": "^8.0.2",
+    "typescript": "^3.3.1"
+  },
+  "dependencies": {
+    "@types/react": "16.4.16",
+    "react": "16.5.2",
+    "react-dom": "16.5.2"
+  }
+}
