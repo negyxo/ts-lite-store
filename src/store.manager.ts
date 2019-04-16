@@ -6,16 +6,16 @@ import { Store } from "./store";
  * beginging of the App.
  */
 export  class StoreManager {
-    static globalStore : Store<any> | undefined;
+    private static globalStore: Store<any> | undefined;
 
-    static createStore<TAppState>(initialStore: TAppState) {
+    public static createStore<TAppState>(initialStore: TAppState) {
         if (!this.globalStore) {
             this.globalStore = new Store<TAppState>(initialStore);
         }
-        return <Store<TAppState>>this.globalStore;
+        return this.globalStore as Store<TAppState>;
     }
 
-    static getStore<TAppState>() : Store<TAppState> {
-        return <Store<TAppState>>this.globalStore;
+    public static getStore<TAppState>(): Store<TAppState> {
+        return this.globalStore as Store<TAppState>;
     }
 }

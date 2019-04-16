@@ -1,10 +1,11 @@
 import { DeepPartial } from "./deep.partial";
 
-export type ObservableFunc<TAppState> =  (state:TAppState, oldState?: TAppState) => DeepPartial<TAppState> | Promise<void> | void;
+export type ObservableFunc<TAppState> =
+    (state: TAppState, oldState?: TAppState) => DeepPartial<TAppState> | Promise<void> | void;
 
-interface ObservableMethod<TAppState> {
-    func: ObservableFunc<TAppState>
-    args: ((appState: TAppState) => any)[];
+interface IObservableMethod<TAppState> {
+    func: ObservableFunc<TAppState>;
+    args: Array<(appState: TAppState) => any>;
 }
 
 /**
@@ -15,24 +16,24 @@ export class Observer<TAppState = any> {
     constructor() {
         this.registerObserver(
             s => this.setState(s),
-            c => c
+            c => c,
         );
     }
 
-    // We need to separate each type of observable functions to its
-    // separate list. This is because we cannot inspect in a runtime
-    // what is the return type of the function, unless we execute 
-    // the function and wait for its return value
-    private mutableObservers: ObservableMethod<TAppState>[] = [];
-    private asyncObservers: ObservableMethod<TAppState>[] = [];
-    private observers: ObservableMethod<TAppState>[] = [];
+    // we need to separate each type of observable functions to its separate
+    // list. This is because we cannot inspect in a runtime what is the return
+    // type of the function, unless we execute the function and wait for its
+    // return value
+    private mutableObservers: Array<IObservableMethod<TAppState>> = [];
+    private asyncObservers: Array<IObservableMethod<TAppState>> = [];
+    private observers: Array<IObservableMethod<TAppState>> = [];
 
-    private mutableInitializers: ObservableFunc<TAppState>[] = [];
-    private asyncInitializers: ObservableFunc<TAppState>[] = [];
-    private initializers: ObservableFunc<TAppState>[] = [];
+    private mutableInitializers: Array<ObservableFunc<TAppState>> = [];
+    private asyncInitializers: Array<ObservableFunc<TAppState>> = [];
+    private initializers: Array<ObservableFunc<TAppState>> = [];
 
-    private destuctors: (() => void)[] = [];
-    private updateRequest!:((state: DeepPartial<TAppState>) => void);
+    private destuctors: Array<() => void> = [];
+    private updateRequest!: ((state: DeepPartial<TAppState>) => void);
     private stateInternal!: TAppState;
 
     /**
@@ -43,37 +44,37 @@ export class Observer<TAppState = any> {
     }
 
     protected registerMutableObserver(
-        func: (state:TAppState, oldState?: TAppState) => DeepPartial<TAppState>,
-        ...args: ((appState: TAppState) => any)[]) {
+        func: (state: TAppState, oldState?: TAppState) => DeepPartial<TAppState>,
+        ...args: Array<(appState: TAppState) => any>) {
             this.mutableObservers.push({
+                args,
                 func,
-                args
             });
     }
 
     protected registerAsyncObserver(
-        func: (state:TAppState, oldState?: TAppState) => Promise<void>,
-        ...args: ((appState: TAppState) => any)[]) {
+        func: (state: TAppState, oldState?: TAppState) => Promise<void>,
+        ...args: Array<(appState: TAppState) => any>) {
             this.asyncObservers.push({
+                args,
                 func,
-                args
             });
     }
 
     protected registerObserver(
-        func: (state:TAppState, oldState?: TAppState) => void,
-        ...args: ((appState: TAppState) => any)[]) {
+        func: (state: TAppState, oldState?: TAppState) => void,
+        ...args: Array<(appState: TAppState) => any>) {
             this.observers.push({
+                args,
                 func,
-                args
             });
     }
 
-    protected registerMutableInitializer(func: (state:TAppState, oldState?: TAppState) => DeepPartial<TAppState>) {
+    protected registerMutableInitializer(func: (state: TAppState, oldState?: TAppState) => DeepPartial<TAppState>) {
         this.mutableInitializers.push(func);
     }
 
-    protected registerAsyncInitializer(func: (state:TAppState, oldState?: TAppState) => Promise<void>) {
+    protected registerAsyncInitializer(func: (state: TAppState, oldState?: TAppState) => Promise<void>) {
         this.asyncInitializers.push(func);
     }
 
@@ -95,28 +96,28 @@ export class Observer<TAppState = any> {
     }
 
     /** @internal */
-    initializeObserver(state: TAppState, updateRequest: (state: DeepPartial<TAppState>) => void) {
+    public initializeObserver(state: TAppState, updateRequest: (state: DeepPartial<TAppState>) => void) {
         this.stateInternal = state;
         this.updateRequest = updateRequest;
-    } 
+    }
 
     /** @internal */
-    getInitializerFunc() : ObservableFunc<TAppState>[] {
+    public getInitializerFunc(): Array<ObservableFunc<TAppState>> {
         return this.initializers;
     }
 
     /** @internal */
-    getAsyncInitializerFunc() : ObservableFunc<TAppState>[] {
+    public getAsyncInitializerFunc(): Array<ObservableFunc<TAppState>> {
         return this.asyncInitializers;
     }
 
     /** @internal */
-    getMutableIncnitializerFunc() : ObservableFunc<TAppState>[] {
+    public getMutableIncnitializerFunc(): Array<ObservableFunc<TAppState>> {
         return this.mutableInitializers;
     }
 
     /** @internal */
-    getAsyncObservableFuncs(state: TAppState, oldState: TAppState) : ObservableFunc<TAppState>[] {
+    public getAsyncObservableFuncs(state: TAppState, oldState: TAppState): Array<ObservableFunc<TAppState>> {
         const funcs = this.asyncObservers
             .filter(p => p.args.some(e => e(oldState) !== e(state)))
             .map(p => p.func);
@@ -125,7 +126,8 @@ export class Observer<TAppState = any> {
     }
 
     /** @internal */
-    getMutableObservableFuncs(state: TAppState, oldState: TAppState, returnAll: boolean) : ObservableFunc<TAppState>[] {
+    public getMutableObservableFuncs(state: TAppState, oldState: TAppState, returnAll: boolean)
+    : Array<ObservableFunc<TAppState>> {
         const funcs = this.mutableObservers
             .filter(p => returnAll || p.args.some(e => e(oldState) !== e(state)))
             .map(p => p.func);
@@ -134,7 +136,7 @@ export class Observer<TAppState = any> {
     }
 
     /** @internal */
-    getObservableFuncs(state: TAppState, oldState: TAppState) : ObservableFunc<TAppState>[] {
+    public getObservableFuncs(state: TAppState, oldState: TAppState): Array<ObservableFunc<TAppState>> {
         const funcs = this.observers
             .filter(p => p.args.some(e => e(oldState) !== e(state)))
             .map(p => p.func);
@@ -143,8 +145,7 @@ export class Observer<TAppState = any> {
     }
 
     /** @internal */
-    signalDestuctors() {
+    public signalDestuctors() {
         this.destuctors.forEach(p => p());
     }
 }
-

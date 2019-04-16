@@ -1,0 +1,11 @@
+{
+    "extends": "tslint:recommended",
+    "rules": {
+        "typedef": false,
+        "member-ordering": false,
+        "arrow-parens": false,
+        "no-shadowed-variable": false,
+        "max-line-length": false,
+        "forin": false
+    }
+}

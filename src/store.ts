@@ -1,7 +1,7 @@
-import { DeepPartial } from './deep.partial';
-import { Subscriber } from './subscriber';
-import { merge } from './merge';
-import { Observer, ObservableFunc } from './observer';
+import { DeepPartial } from "./deep.partial";
+import { merge } from "./merge";
+import { ObservableFunc, Observer } from "./observer";
+import { Subscriber } from "./subscriber";
 
 /**
  * The store class. It holds information about app state, allows
@@ -14,21 +14,21 @@ export class Store<TAppState = {}> {
     }
 
     private stateInternal: TAppState;
-    private subscribers: Subscriber<TAppState>[] = [];
+    private subscribers: Array<Subscriber<TAppState>> = [];
     private observers: Map<Observer<TAppState>, Subscriber | undefined> = new Map();
 
     /**
      * The global store state. It is represented in its original form
      * (state is not altered to readonly, use immutable type for TAppState)
      */
-    get state() : TAppState {
-        return <TAppState>this.stateInternal;
+    get state(): TAppState {
+        return this.stateInternal as TAppState;
     }
 
     /**
      * Creates subscriber that can be used to monitor store's state change
      */
-    createSubscriber() {
+    public createSubscriber() {
         const subscriber = new Subscriber<TAppState>(
             () => this.stateInternal,
             (s, m) => this.registerObserver(m, s),
@@ -42,11 +42,10 @@ export class Store<TAppState = {}> {
      * Removes the subscriber from the store. If given subscriber is not
      * found, an exception will be thrown.
      */
-    removeSubscriber(subscriber: Subscriber) {
-        const item = this.subscribers.find(c => c == subscriber);
+    public removeSubscriber(subscriber: Subscriber) {
+        const item = this.subscribers.find(c => c === subscriber);
 
-        if (item)
-        {
+        if (item) {
             const index = this.subscribers.indexOf(item);
             this.subscribers.splice(index, 1);
             const observer = Array.from(this.observers.entries()).find(p => p[1] === item);
@@ -55,23 +54,21 @@ export class Store<TAppState = {}> {
                 observer[0].signalDestuctors();
                 this.unregisterObserver(observer[0]);
             }
-        }
-        else
-        {
+        } else {
             throw new Error("Couldn't find given subscriber in a store list. Unknown subscriber to remove.");
         }
     }
 
     /**
-     * Registers Observer object. 
-     * @param observer 
-     * @param associatedSubscriber 
+     * Registers Observer object.
+     * @param observer
+     * @param associatedSubscriber
      * If associatedSubscriber is defined, then when Subscriber is removed,
      * observer will be removed too. This way we can pair observer to subscriber
      * so we don't have manually to clean observer too when creating trough
      * subscriber
      */
-    registerObserver(observer: Observer<TAppState>, associatedSubscriber?: Subscriber | undefined) {
+    public registerObserver(observer: Observer<TAppState>, associatedSubscriber?: Subscriber | undefined) {
         observer.initializeObserver(this.state, s => this.update(s));
         this.observers.set(observer, associatedSubscriber);
 
@@ -95,7 +92,7 @@ export class Store<TAppState = {}> {
     /**
      * Removes the observer from the store's list
      */
-    unregisterObserver(observer: Observer<TAppState>) {
+    public unregisterObserver(observer: Observer<TAppState>) {
         this.observers.delete(observer);
     }
 
@@ -104,7 +101,7 @@ export class Store<TAppState = {}> {
      * on all subscribers and run through all observers and raise, if needed,
      * the registered functions.
      */
-    update(newAppState: DeepPartial<TAppState>) {
+    public update(newAppState: DeepPartial<TAppState>) {
         const oldAppState = this.stateInternal;
         const tempState = merge(oldAppState, newAppState);
         const alteredState = this.runMutableObservers(tempState, oldAppState);
@@ -119,9 +116,11 @@ export class Store<TAppState = {}> {
         this.subscribers.forEach(p => p.signalStateChanged(this.stateInternal));
     }
 
-    private resolveFetchFunctions(funcs: ObservableFunc<TAppState>[], state: TAppState, oldState: TAppState) : DeepPartial<TAppState> | undefined {
+    private resolveFetchFunctions(
+        funcs: Array<ObservableFunc<TAppState>>,
+        state: TAppState, oldState: TAppState): DeepPartial<TAppState> | undefined {
+
         const tasks = funcs.map(p => p(state, oldState));
-        
         const states =  tasks
             .filter(p => !(p instanceof Promise))
             .filter(p => p !== undefined)
@@ -137,14 +136,14 @@ export class Store<TAppState = {}> {
         const asyncObservers = Array
             .from(this.observers.keys())
             .map(p => p.getAsyncObservableFuncs(state, oldState))
-            .reduce((p, c) => p.concat(c), [])
+            .reduce((p, c) => p.concat(c), []);
 
         asyncObservers.forEach(p => p(state, oldState));
 
         const observers = Array
             .from(this.observers.keys())
             .map(p => p.getObservableFuncs(state, oldState))
-            .reduce((p, c) => p.concat(c), [])
+            .reduce((p, c) => p.concat(c), []);
 
         observers.forEach(p => p(state, oldState));
     }
@@ -153,7 +152,7 @@ export class Store<TAppState = {}> {
         const observers = Array
             .from(this.observers.keys())
             .map(p => p.getMutableObservableFuncs(state, oldState, false))
-            .reduce((p, c) => p.concat(c), [])
+            .reduce((p, c) => p.concat(c), []);
 
         return this.resolveFetchFunctions(observers, state, oldState);
     }

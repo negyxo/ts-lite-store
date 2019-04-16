@@ -1,6 +1,6 @@
 import { DeepPartial } from "./deep.partial";
-import { Observer } from "./observer";
 import { LiteEvent } from "./lite.event";
+import { Observer } from "./observer";
 
 /**
  * Defines subscription to the store. This allows us to listen
@@ -19,25 +19,25 @@ export class Subscriber<TAppState = any> {
     }
 
     /**
-     *  Signals that global (store's) TAppState is changed 
-     **/
-    stateChanged: LiteEvent<TAppState>;
+     *  Signals that global (store's) TAppState is changed
+     */
+    public stateChanged: LiteEvent<TAppState>;
 
     /**
-     * Registers Observer object to the store. 
-     * Note: 
+     * Registers Observer object to the store.
+     * Note:
      * When Observer is registered through Subsrciber (this method)
      * then it will be also automatically removed when Subscriber is
      * removed from the store.
-     * @param observer 
+     * @param observer
      */
-    registerObserver(observer: Observer<TAppState>) {
+    public registerObserver(observer: Observer<TAppState>) {
         this.registerMidlewareRequest(this, observer);
         return this;
-    } 
+    }
 
     /** @internal */
-    signalStateChanged(newState: TAppState) {
+    public signalStateChanged(newState: TAppState) {
         this.stateChanged.trigger(newState);
     }
 }
