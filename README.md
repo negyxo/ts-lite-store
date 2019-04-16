@@ -1,13 +1,16 @@
-ts-lite-store Readme
+ts-lite-store
 ====================================================================
 
 **About**
+
 This is flux based implementation in TypeScript for the React projects. The main goal was to leverage the power of TypeScript and use its type system as much as possible. This is simple library, with simple features, it is smilar to Redux, but it is oriented more to TypeScript than to vanila Javascript users.
 
 **Installing**
+
 You can find it on npm. To install type: `npm ts-lite-store -i`
 
 **Introduction**
+
 The ts-lite-store is following the Flux architecture with its unidirectional data flow. The store can be updated only in one place, by calling function `update`. The Store class cannot be used to listen for state changes, instead, Subscriber class must be used, which has simple event handler implementation that can be used to listen for the store's state changes. But, using the Subscriber's `stateChanged` event can be cumbersome, so in order to listen for the store state change events there is an Observer class that can be used for fine grained change detection.
 
 **API**
@@ -122,21 +125,6 @@ const MyComponentConnected = ConnectedWithObserver(
 In case when ConnectedWithObserver is called, observer will be created automatically and it will be associated with the component. So, when component is removed (componentWillUnmount) from the React tree, it will be also automatically removed from the store's observer collection, so given observer will onyl live during component lifetime which can optimize significantly performance as only few observers will be alive (for instance if there are hundreds observers, each observing its part of the state in some large application).
 
 
-**Example**
+**Examples**
 
 Code examples comming soon.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
