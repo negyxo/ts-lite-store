@@ -17,6 +17,8 @@ export class Store<TAppState = {}> {
     private subscribers: Array<Subscriber<TAppState>> = [];
     private observers: Map<Observer<TAppState>, Subscriber | undefined> = new Map();
 
+    maximumStackCount = 1000;
+
     /**
      * The global store state. It is represented in its original form
      * (state is not altered to readonly, use immutable type for TAppState)
@@ -72,7 +74,7 @@ export class Store<TAppState = {}> {
         observer.initializeObserver(this.state, s => this.update(s));
         this.observers.set(observer, associatedSubscriber);
 
-        // Run only mutable intializers, arr other type (void and Promise)
+        // Run only mutable intializers, all other types (void and Promise)
         // are ignored, they'll be called later, after mutable observers are done
         const mutableInitializers = observer.getMutableIncnitializerFunc();
         const newState = this.resolveFetchFunctions(mutableInitializers, this.state, this.state);
@@ -121,7 +123,7 @@ export class Store<TAppState = {}> {
         state: TAppState, oldState: TAppState): DeepPartial<TAppState> | undefined {
 
         const tasks = funcs.map(p => p(state, oldState));
-        const states =  tasks
+        const states = tasks
             .filter(p => !(p instanceof Promise))
             .filter(p => p !== undefined)
             .map(p => p as DeepPartial<TAppState>);
@@ -149,6 +151,38 @@ export class Store<TAppState = {}> {
     }
 
     private runMutableObservers(state: TAppState, oldState: TAppState): DeepPartial<TAppState> | undefined {
+      
+        let newState: TAppState | undefined = undefined;
+        let tempState = state;
+        let tempOldState = oldState;
+        let counter = 0;
+
+        // We need to go over observers as many times as needed, because each
+        // observer can trigger change that can trigger another absorver and
+        // so on. This can lead to infinity recursion, but we try to prevent
+        // this by counting how many times we are looping
+        while(true) {
+            const res = this.runMutableObserversInternal(tempState, tempOldState)
+            if (res !== undefined) {
+                newState = merge(tempState, res);
+                tempOldState = tempState;
+                tempState = newState!;
+            } else {
+                break;
+            }
+
+            // Prevent infinity recursion
+            counter++;
+
+            if (counter > this.maximumStackCount) {
+                throw Error(`Max stack count ${this.maximumStackCount} exceeded. Possible infinite recursion.`)
+            }
+        }
+
+        return newState;
+    }
+
+    private runMutableObserversInternal(state: TAppState, oldState: TAppState): DeepPartial<TAppState> | undefined {
         const observers = Array
             .from(this.observers.keys())
             .map(p => p.getMutableObservableFuncs(state, oldState, false))
