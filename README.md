@@ -82,7 +82,7 @@ const observer = new MyObserver();
 store.registerObserver(observer)
 ```
 
-There are several methods that can be used to register a function. Each type will do its part a slightly different. These function are:
+There are several methods that can be used to register a function. Each type will do its part a slightly differently. These functions are:
 
 `registerMutableObserver`
 `registerAsyncObserver`
