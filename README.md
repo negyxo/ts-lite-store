@@ -85,30 +85,16 @@ store.registerObserver(observer)
 There are several methods that can be used to register a function. Each type will do its part a slightly different. These function are:
 
 `registerMutableObserver`
-As name suggests, this is mutable observer that can alter the state by returning the part of the state (DeepPartil<TState>) as a return value.
-
 `registerAsyncObserver`
-Registers an async observer (Promise<void>) for particular state part and triggers it when it is changed. As name suggests, this is mutable observer that can alter the state by returning the part of the state as a return value.
-
 `registerObserver`
-Registers regular observer that is only triggered but there is no special handling.
-
 `registerMutableInitializer`
-Similar to `registerMutableObserver` but this function doesn't observer nothing, it is only call once, when Observer is created.
-
 `registerAsyncInitializer`
-Similar to `registerAsyncObserver` but this function doesn't observer nothing, it is only call once, when Observer is created.
-
 `registerInitializer`
-Similar to `registerObserver` but this function doesn't observer nothing, it is only call once, when Observer is created.
-
 `registerDestructor`
-Registers function that will be called when Observer is removed from the store.
-
 
 *Connected mixin*
 
-The previous objects can be used as a standalone objects but their power comes when combining with Connected mixing (or ConnectedWithObserver). The Connected mixin returng React HOC that wraps the given component with the store/subscriber/and or observer.
+The previous objects can be used as a standalone objects but their power comes when combining with Connected mixing (or ConnectedWithObserver). The Connected mixin returns React HOC that wraps the given component with the store/subscriber/and or observer.
 
 and the code:
 
