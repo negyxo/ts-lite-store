@@ -1,35 +1,13 @@
 import * as React from "react";
 import { Observer } from "./observer";
 import { Store } from "./store";
-import { StoreManager } from "./store.manager";
 import { Subscriber } from "./subscriber";
+import { useStoreProvider } from "./store.provider";
+import { useEffect } from "react";
 
 // this type is used to calculate difference between Map function given
 // properties and the Props of given component
 type Omit<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
-
-export function Connected<
-    TAppState,
-    TProps,
-    TRes extends Partial<TProps>>(
-        Comp: new(...args: any[]) =>  React.Component<TProps>,
-        map: (store: Store<TAppState>) => TRes) {
-            return ConnectedWithObserverInternal(Comp, undefined, map);
-}
-
-export function ConnectedWithObserver<
-    TAppState,
-    TProps,
-    TRes extends Partial<TProps>,
-    TObserver extends Observer>(
-        Comp: new(...args: any[]) =>  React.Component<TProps>,
-        Observer: (new(...args: any) => TObserver) | undefined,
-        map: (store: Store<TAppState>, observer: TObserver) => TRes) {
-            return ConnectedWithObserverInternal(
-                Comp,
-                Observer,
-                (store: Store<TAppState>, observer: TObserver | undefined) => map(store, observer!));
-}
 
 /**
  * This is mixin function for creating React HOC that is used to hook on global
@@ -41,89 +19,66 @@ export function ConnectedWithObserver<
  * properties. If observer is used, it is also passed to map function, so
  * observer public functions can be used to map Props action to it
  */
-function ConnectedWithObserverInternal<
-    TAppState,
-    TProps,
-    TRes extends Partial<TProps>,
-    TObserver extends Observer>(
-        Comp: new(...args: any[]) =>  React.Component<TProps>,
-        Observer: (new(...args: any) => TObserver) | undefined,
-        map: (store: Store<TAppState>, middleware: TObserver | undefined) => TRes) {
-            return class Connected extends React.Component<Omit<TProps, TRes>, TRes> {
+export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserver extends Observer>(
+    Comp: React.ComponentType<TProps>,
+    map: (store: Store<TAppState>, middleware: TObserver | undefined) => TRes,
+    Observer: (new(...args: any) => TObserver) | undefined) : React.FunctionComponent<Omit<TProps, TRes>> {
+        return (props: Omit<TProps, TRes>) => {
+            const observer = React.useRef<TObserver| undefined>(Observer != undefined ? new Observer(props) : undefined);
+            const store = useStoreProvider();
+            const subscriber = React.useRef<Subscriber>();
+            const [ state, setState ] = React.useState<TRes>(map(store, undefined))
 
-                constructor(...args: any[]) {
-                    super(args[0]);
-                    this.map = map;
-                    this.store = StoreManager.getStore<TAppState>();
-                    this.subscriber = this.store.createSubscriber();
-                    this.subscriber.stateChanged.on(s => this.stateChanged(s));
+            const stateChanged = (state: TAppState) => {
+                const newState = map(store, observer.current);
+                if (!areEqualShallow(newState, state)) {
+                    setState(newState)
+                }
+            }
 
-                    if (Observer) {
-                        this.observer = new Observer(args[0]);
-                        this.subscriber.registerObserver(this.observer);
-                    }
+            useEffect(() => {
+                subscriber.current = store.createSubscriber();
+                subscriber.current.stateChanged.on(s => stateChanged(s));
 
-                    this.state = this.map(this.store, this.observer);
+                if (observer.current) {
+                    subscriber.current.registerObserver(observer.current);
                 }
 
-                public observer: TObserver | undefined;
-                public store: Store<TAppState>;
-                public subscriber: Subscriber<TAppState>;
+                return () => {
+                    store.removeSubscriber(subscriber.current!);
+                };
+            }, []);
 
-                // this flag indicates whether the state can be updated via
-                // setState or state direct set. We need to address this because
-                // setState cannot be called before component is mounted but our
-                // Observer can trigger an async function that can call the
-                // update state before the component mount is completed and in
-                // this case react will throw an error and we will have a missed
-                // state change
-                /** @internal */
-                public canSetState = false;
+            const newProps = { ...props, ...state } as any;
 
-                /** @internal */
-                public map: (store: Store<TAppState>, observer: TObserver | undefined) => TRes;
+            return <Comp {...newProps}/>
+        }
+}
 
-                public componentWillMount() {
-                    this.canSetState = true;
-                }
+function areEqualShallow(a: any, b: any) {
+    if (a === undefined && b === undefined) {
+        return true;
+    }
+    
+    if (a === undefined || b === undefined) {
+        return false;
+    }
 
-                public componentWillUnmount() {
-                    this.store.removeSubscriber(this.subscriber);
-                }
+    for (const key in a) {
+        if (isFunction(a[key])) {
+            if (a[key].toString() !== b[key].toString()) {
+                return false;
+            }
+        }
 
-                public render() {
-                    const args: any = { ...this.props, ...this.state};
-                    return <Comp {...args} />;
-                }
+        if (a[key] !== b[key]) {
+            return false;
+        }
+    }
+    return true;
+}
 
-                public stateChanged(state: TAppState) {
-                    const newState = this.map(this.store, this.observer);
 
-                    if (!this.areEqualShallow(newState, this.state)) {
-                        if (this.canSetState) {
-                            this.setState(newState);
-                        } else {
-                            this.state = newState;
-                        }
-                    }
-                }
-
-                /** @internal */
-                public areEqualShallow(a: any, b: any) {
-                    if (a === undefined && b === undefined) {
-                        return true;
-                    }
-
-                    if (a === undefined || b === undefined) {
-                        return false;
-                    }
-
-                    for (const key in a) {
-                        if (a[key] !== b[key]) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-            };
+function isFunction(obj: any) {
+    return (typeof obj === "function");
 }

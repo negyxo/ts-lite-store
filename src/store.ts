@@ -159,7 +159,7 @@ export class Store<TAppState = {}> {
 
         // We need to go over observers as many times as needed, because each
         // observer can trigger change that can trigger another absorver and
-        // so on. This can lead to infinity recursion, but we try to prevent
+        // so on. This can lead to infinite recursion, but we try to prevent
         // this by counting how many times we are looping
         while(true) {
             const res = this.runMutableObserversInternal(tempState, tempOldState)
@@ -171,7 +171,7 @@ export class Store<TAppState = {}> {
                 break;
             }
 
-            // Prevent infinity recursion
+            // Prevent infinite recursion
             counter++;
 
             if (counter > this.maximumStackCount) {
