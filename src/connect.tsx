@@ -24,7 +24,7 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
     map: (store: Store<TAppState>, middleware: TObserver | undefined) => TRes,
     Observer: (new(...args: any) => TObserver) | undefined) : React.FunctionComponent<Omit<TProps, TRes>> {
         return (props: Omit<TProps, TRes>) => {
-            const observer = React.useRef<TObserver| undefined>(Observer != undefined ? new Observer(props) : undefined);
+            const observer = React.useRef<TObserver| undefined>(undefined);
             const store = useStoreProvider();
             const subscriber = React.useRef<Subscriber>();
             const [ state, setState ] = React.useState<TRes>(map(store, undefined))
@@ -40,7 +40,8 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
                 subscriber.current = store.createSubscriber();
                 subscriber.current.stateChanged.on(s => stateChanged(s));
 
-                if (observer.current) {
+                if (Observer) {
+                    observer.current = new Observer(props);
                     subscriber.current.registerObserver(observer.current);
                 }
 

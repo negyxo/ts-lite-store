@@ -12,14 +12,19 @@ interface IObservableMethod<TAppState> {
  * Observer class used to listen for changes for some store's part.
  */
 export class Observer<TAppState = any> {
-
     constructor() {
+        this.key = this.constructor.name
         this.registerObserver(
             s => this.setState(s),
             c => c,
         );
     }
 
+    /**
+     * 
+     */
+    key: string;
+    
     // we need to separate each type of observable functions to its separate
     // list. This is because we cannot inspect in a runtime what is the return
     // type of the function, unless we execute the function and wait for its

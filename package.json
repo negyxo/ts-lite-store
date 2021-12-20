@@ -1,6 +1,6 @@
 {
   "name": "ts-lite-store",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "scripts": {
     "build": "npm run clean && npm run copy && tsc -p .",
     "clean": "del /Q /S lib",
