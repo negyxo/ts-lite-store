@@ -3,8 +3,16 @@
  * @param target any type
  */
 
-function isObject(target: any) {
-    return (target && typeof target === "object" && !(target instanceof Date)  && !Array.isArray(target));
+function isPlainObject(obj: any) {
+    if (obj && obj.constructor && obj.constructor.toString) {
+        const parts = obj.constructor.toString().split(" ");
+
+        if (parts.length > 1) {
+            return parts[1].toLowerCase() === "object()";
+        }
+    }
+
+    return false;
 }
 
 export type Subset<A extends {}, B extends {}> = {
@@ -36,7 +44,7 @@ function mergeInternal(first: any, second: any): { obj: any, deepSame: boolean }
 
     for (const key in first) {
         const hasProperty = second.hasOwnProperty(key);
-        if (isObject(first[key])) {
+        if (isPlainObject(first[key])) {
             if (hasProperty)  {
                 const nextValue = second[key];
                 if (nextValue) {

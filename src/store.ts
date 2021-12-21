@@ -1,4 +1,5 @@
 import { DeepPartial } from "./deep.partial";
+import { isDeepEqual } from "./deepEqual";
 import { merge } from "./merge";
 import { ObservableFunc, Observer } from "./observer";
 import { Subscriber } from "./subscriber";
@@ -17,7 +18,7 @@ export class Store<TAppState = {}> {
     private subscribers: Array<Subscriber<TAppState>> = [];
     private observers: Map<Observer<TAppState>, Subscriber | undefined> = new Map();
 
-    maximumStackCount = 1000;
+    public maximumStackCount = 1000;
 
     /**
      * The global store state. It is represented in its original form
@@ -74,6 +75,19 @@ export class Store<TAppState = {}> {
         observer.initializeObserver(this.state, s => this.update(s));
         this.observers.set(observer, associatedSubscriber);
 
+        // This will set state to new state if setInitialState on observer is defined
+        // this will not trigger observers, because this is intentend, we want an option
+        // to have alwyas the same starting point when observer is initialized, that way
+        // we won't have side effects when state is already changed by this observer in some
+        // of the previous calls
+        const initialState = observer.getInitialState();
+        if (initialState !== undefined) {
+            const tempState = initialState(this.stateInternal);
+            const oldAppState = this.stateInternal;
+            const newAppState = merge(oldAppState, tempState);
+            this.stateInternal = newAppState;
+        }
+
         // Run only mutable intializers, all other types (void and Promise)
         // are ignored, they'll be called later, after mutable observers are done
         const mutableInitializers = observer.getMutableIncnitializerFunc();
@@ -104,6 +118,12 @@ export class Store<TAppState = {}> {
      * the registered functions.
      */
     public update(newAppState: DeepPartial<TAppState>) {
+
+        // If newly values are the same as the current ones
+        // avoid triggering update, because nothing is changed
+        if (isDeepEqual(newAppState, this.stateInternal))
+            return;
+
         const oldAppState = this.stateInternal;
         const tempState = merge(oldAppState, newAppState);
         const alteredState = this.runMutableObservers(tempState, oldAppState);
@@ -151,18 +171,17 @@ export class Store<TAppState = {}> {
     }
 
     private runMutableObservers(state: TAppState, oldState: TAppState): DeepPartial<TAppState> | undefined {
-      
-        let newState: TAppState | undefined = undefined;
+        let newState: TAppState | undefined;
         let tempState = state;
         let tempOldState = oldState;
         let counter = 0;
 
         // We need to go over observers as many times as needed, because each
-        // observer can trigger change that can trigger another absorver and
-        // so on. This can lead to infinity recursion, but we try to prevent
+        // observer can trigger change that can trigger another observer and
+        // so on. This can lead to infinite recursion, but we try to prevent
         // this by counting how many times we are looping
-        while(true) {
-            const res = this.runMutableObserversInternal(tempState, tempOldState)
+        while (true) {
+            const res = this.runMutableObserversInternal(tempState, tempOldState);
             if (res !== undefined) {
                 newState = merge(tempState, res);
                 tempOldState = tempState;
@@ -171,11 +190,11 @@ export class Store<TAppState = {}> {
                 break;
             }
 
-            // Prevent infinity recursion
+            // Prevent infinite recursion
             counter++;
 
             if (counter > this.maximumStackCount) {
-                throw Error(`Max stack count ${this.maximumStackCount} exceeded. Possible infinite recursion.`)
+                throw Error(`Max stack count ${this.maximumStackCount} exceeded. Possible infinite recursion.`);
             }
         }
 

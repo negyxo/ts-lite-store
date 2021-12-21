@@ -1,9 +1,8 @@
 {
   "name": "ts-lite-store",
-  "version": "1.0.8",
+  "version": "1.0.30",
   "scripts": {
-    "prepublishOnly": "npm run compile",
-    "compile": "npm run clean && tsc -p .",
+    "build": "npm run clean && tsc -p .",
     "clean": "del /Q /S lib",
     "copy": "xcopy package.json lib\\package.json",
     "test": "mocha --require ts-node/register test/**/*.ts"
@@ -26,11 +25,10 @@
     "chai": "^4.2.0",
     "mocha": "^6.0.0",
     "ts-node": "^8.0.2",
-    "typescript": "^3.3.1"
+    "typescript": "3.5.3"
   },
-  "dependencies": {
-    "@types/react": "16.4.16",
-    "react": "16.5.2",
-    "react-dom": "16.5.2"
+  "peerDependencies": {
+    "@types/react": "16.8.20",
+    "react": "16.8.6"
   }
 }

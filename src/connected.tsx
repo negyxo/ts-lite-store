@@ -12,7 +12,7 @@ export function Connected<
     TAppState,
     TProps,
     TRes extends Partial<TProps>>(
-        Comp: new(...args: any[]) =>  React.Component<TProps>,
+        Comp: React.ComponentType<TProps>,
         map: (store: Store<TAppState>) => TRes) {
             return ConnectedWithObserverInternal(Comp, undefined, map);
 }
@@ -22,7 +22,7 @@ export function ConnectedWithObserver<
     TProps,
     TRes extends Partial<TProps>,
     TObserver extends Observer>(
-        Comp: new(...args: any[]) =>  React.Component<TProps>,
+        Comp: React.ComponentType<TProps>,
         Observer: (new(...args: any) => TObserver) | undefined,
         map: (store: Store<TAppState>, observer: TObserver) => TRes) {
             return ConnectedWithObserverInternal(
@@ -46,7 +46,7 @@ function ConnectedWithObserverInternal<
     TProps,
     TRes extends Partial<TProps>,
     TObserver extends Observer>(
-        Comp: new(...args: any[]) =>  React.Component<TProps>,
+        Comp: React.ComponentType<TProps>,
         Observer: (new(...args: any) => TObserver) | undefined,
         map: (store: Store<TAppState>, middleware: TObserver | undefined) => TRes) {
             return class Connected extends React.Component<Omit<TProps, TRes>, TRes> {
@@ -119,11 +119,19 @@ function ConnectedWithObserverInternal<
                     }
 
                     for (const key in a) {
-                        if (a[key] !== b[key]) {
+                        if (isFunction(a[key])) {
+                            if (a[key].toString() !== b[key].toString()) {
+                                return false;
+                            }
+                        } else if (a[key] !== b[key]) {
                             return false;
                         }
                     }
                     return true;
                 }
             };
+}
+
+function isFunction(obj: any) {
+    return (typeof obj === "function");
 }
