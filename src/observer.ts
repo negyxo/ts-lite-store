@@ -41,6 +41,9 @@ export class Observer<TAppState = any> {
     private updateRequest!: ((state: DeepPartial<TAppState>) => void);
     private stateInternal!: TAppState;
 
+    private _disposed = false;
+    private initialState: ObservableFunc<TAppState> | undefined;
+
     /**
      * Calls update on a global App State.
      */
@@ -99,10 +102,19 @@ export class Observer<TAppState = any> {
         return this.stateInternal!;
     }
 
+    public setInitialState(func: (currentState: TAppState) => DeepPartial<TAppState>) {
+        this.initialState = func;
+    }
+
     /** @internal */
     public initializeObserver(state: TAppState, updateRequest: (state: DeepPartial<TAppState>) => void) {
         this.stateInternal = state;
         this.updateRequest = updateRequest;
+    }
+
+      /** @internal */
+    public getInitialState(): ObservableFunc<TAppState> | undefined {
+        return this.initialState;
     }
 
     /** @internal */
@@ -122,6 +134,8 @@ export class Observer<TAppState = any> {
 
     /** @internal */
     public getAsyncObservableFuncs(state: TAppState, oldState: TAppState): Array<ObservableFunc<TAppState>> {
+        if (this._disposed) return [];
+
         const funcs = this.asyncObservers
             .filter(p => p.args.some(e => e(oldState) !== e(state)))
             .map(p => p.func);
@@ -132,6 +146,8 @@ export class Observer<TAppState = any> {
     /** @internal */
     public getMutableObservableFuncs(state: TAppState, oldState: TAppState, returnAll: boolean)
     : Array<ObservableFunc<TAppState>> {
+        if (this._disposed) return [];
+
         const funcs = this.mutableObservers
             .filter(p => returnAll || p.args.some(e => e(oldState) !== e(state)))
             .map(p => p.func);
@@ -141,6 +157,8 @@ export class Observer<TAppState = any> {
 
     /** @internal */
     public getObservableFuncs(state: TAppState, oldState: TAppState): Array<ObservableFunc<TAppState>> {
+        if (this._disposed) return [];
+
         const funcs = this.observers
             .filter(p => p.args.some(e => e(oldState) !== e(state)))
             .map(p => p.func);
@@ -150,6 +168,7 @@ export class Observer<TAppState = any> {
 
     /** @internal */
     public signalDestuctors() {
+        this._disposed = true;
         this.destuctors.forEach(p => p());
     }
 }

@@ -1,6 +1,6 @@
 {
   "name": "ts-lite-store",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "scripts": {
     "build": "npm run clean && npm run copy && tsc -p .",
     "clean": "del /Q /S lib",
@@ -15,7 +15,9 @@
     "url": "https://github.com/negyxo/ts-lite-store.git"
   },
   "keywords": [
-    "React", "Flux", "Store"
+    "React",
+    "Flux",
+    "Store"
   ],
   "author": "Aleksandar Perkucin",
   "license": "MIT",
