@@ -24,12 +24,15 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
     map: (store: Store<TAppState>, middleware: TObserver | undefined) => TRes,
     Observer: (new(...args: any) => TObserver) | undefined) : React.FunctionComponent<Omit<TProps, TRes>> {
         return (props: Omit<TProps, TRes>) => {
-            const observer = React.useRef<TObserver| undefined>(undefined);
+            
             const store = useStoreProvider();
+            const observer = React.useRef<TObserver| undefined>(Observer
+                ? store.getOrCreateObserver(Observer.name ?? "", Observer, props)
+                : undefined);
             const subscriber = React.useRef<Subscriber>();
-            const [ state, setState ] = React.useState<TRes>(map(store, undefined))
+            const [ state, setState ] = React.useState<TRes>(map(store, observer.current))
 
-            const stateChanged = (state: TAppState) => {
+            const stateChanged = () => {
                 const newState = map(store, observer.current);
                 if (!areEqualShallow(newState, state)) {
                     setState(newState)
@@ -38,10 +41,9 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
 
             useEffect(() => {
                 subscriber.current = store.createSubscriber();
-                subscriber.current.stateChanged.on(s => stateChanged(s));
+                subscriber.current.stateChanged.on(() => stateChanged());
 
-                if (Observer) {
-                    observer.current = new Observer(props);
+                if (observer.current) {
                     subscriber.current.registerObserver(observer.current);
                 }
 
@@ -67,9 +69,7 @@ function areEqualShallow(a: any, b: any) {
 
     for (const key in a) {
         if (isFunction(a[key])) {
-            if (a[key].toString() !== b[key].toString()) {
-                return false;
-            }
+            continue;
         }
 
         if (a[key] !== b[key]) {

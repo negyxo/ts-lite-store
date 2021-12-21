@@ -93,7 +93,6 @@ export class Observer<TAppState = any> {
 
     private setState(state: TAppState ) {
         this.stateInternal = state;
-        return undefined;
     }
 
     get state() {

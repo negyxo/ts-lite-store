@@ -80,6 +80,7 @@ export class Store<TAppState = {}> {
         }
     }
 
+
     /**
      * Registers Observer object.
      * @param observer
@@ -139,6 +140,20 @@ export class Store<TAppState = {}> {
         this.stateInternal = finalAppState;
         this.runObservers(finalAppState, oldAppState);
         this.triggerStateChanged();
+    }
+
+     /** @internal */
+    public getOrCreateObserver<TObserver extends Observer>(
+        key: string, 
+        Observer: (new(...args: any) => TObserver),
+        observerArgs: any
+    ) {
+        let observer = this.observers.get(key)?.observer;
+
+        if (observer === undefined)
+            observer = new Observer(observerArgs);
+
+        return observer as TObserver;
     }
 
     private triggerStateChanged() {
