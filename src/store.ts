@@ -4,6 +4,11 @@ import { merge } from "./merge";
 import { ObservableFunc, Observer } from "./observer";
 import { Subscriber } from "./subscriber";
 
+interface ObserverMap<TAppState> {
+    observer: Observer<TAppState>;
+    subscribers: Subscriber[]
+};
+
 /**
  * The store class. It holds information about app state, allows
  * to monitor store's app state change (through subscribers) and
@@ -16,7 +21,7 @@ export class Store<TAppState = {}> {
 
     private stateInternal: TAppState;
     private subscribers: Array<Subscriber<TAppState>> = [];
-    private observers: Map<Observer<TAppState>, Subscriber | undefined> = new Map();
+    private observers: Map<string, ObserverMap<TAppState>> = new Map();
 
     public maximumStackCount = 1000;
 
@@ -51,11 +56,25 @@ export class Store<TAppState = {}> {
         if (item) {
             const index = this.subscribers.indexOf(item);
             this.subscribers.splice(index, 1);
-            const observer = Array.from(this.observers.entries()).find(p => p[1] === item);
+            const map = Array
+                .from(this.observers.entries())
+                .find(p => p[1]!.subscribers.find(s => s === item) !== undefined);
 
-            if (observer) {
-                observer[0].signalDestuctors();
-                this.unregisterObserver(observer[0]);
+            if (map === undefined || map[1].subscribers!.length === 0) {
+                return;
+            }
+            else if (map[1].subscribers!.length === 1) {
+                map[1].observer.signalDestuctors();
+                this.unregisterObserver(map[1].observer);
+            }
+            else {
+                this.observers.set(
+                    map[0],
+                    {
+                        observer: map[1].observer,
+                        subscribers: map[1].subscribers.filter(s => s !== item)
+                    }
+                )
             }
         } else {
             throw new Error("Couldn't find given subscriber in a store list. Unknown subscriber to remove.");
@@ -72,8 +91,16 @@ export class Store<TAppState = {}> {
      * subscriber
      */
     public registerObserver(observer: Observer<TAppState>, associatedSubscriber?: Subscriber | undefined) {
+        if (this.observers.has(observer.key)) {
+            return;
+        }
+
         observer.initializeObserver(this.state, s => this.update(s));
-        this.observers.set(observer, associatedSubscriber);
+        this.observers.set(observer.key, 
+            {
+                observer,
+                subscribers: associatedSubscriber ? [associatedSubscriber] : []
+            });
 
         // This will set state to new state if setInitialState on observer is defined
         // this will not trigger observers, because this is intentend, we want an option
@@ -109,7 +136,7 @@ export class Store<TAppState = {}> {
      * Removes the observer from the store's list
      */
     public unregisterObserver(observer: Observer<TAppState>) {
-        this.observers.delete(observer);
+        this.observers.delete(observer.key);
     }
 
     /**
@@ -155,15 +182,17 @@ export class Store<TAppState = {}> {
     }
 
     private runObservers(state: TAppState, oldState: TAppState) {
-        const asyncObservers = Array
-            .from(this.observers.keys())
+        const allObservers = Array
+            .from(this.observers.values())
+            .map(p => p.observer);
+        
+        const asyncObservers = allObservers
             .map(p => p.getAsyncObservableFuncs(state, oldState))
             .reduce((p, c) => p.concat(c), []);
 
         asyncObservers.forEach(p => p(state, oldState));
 
-        const observers = Array
-            .from(this.observers.keys())
+        const observers = allObservers
             .map(p => p.getObservableFuncs(state, oldState))
             .reduce((p, c) => p.concat(c), []);
 
@@ -203,7 +232,8 @@ export class Store<TAppState = {}> {
 
     private runMutableObserversInternal(state: TAppState, oldState: TAppState): DeepPartial<TAppState> | undefined {
         const observers = Array
-            .from(this.observers.keys())
+            .from(this.observers.values())
+            .map(p => p.observer)
             .map(p => p.getMutableObservableFuncs(state, oldState, false))
             .reduce((p, c) => p.concat(c), []);
 
