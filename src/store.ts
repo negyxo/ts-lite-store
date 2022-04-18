@@ -6,6 +6,7 @@ import { Subscriber } from "./subscriber";
 
 interface ObserverMap<TAppState> {
     observer: Observer<TAppState>;
+    initialized: boolean;
     subscribers: Subscriber[]
 };
 
@@ -72,6 +73,7 @@ export class Store<TAppState = {}> {
                     map[0],
                     {
                         observer: map[1].observer,
+                        initialized: map[1].initialized,
                         subscribers: map[1].subscribers.filter(s => s !== item)
                     }
                 )
@@ -92,7 +94,8 @@ export class Store<TAppState = {}> {
      * subscriber
      */
     public registerObserver(observer: Observer<TAppState>, associatedSubscriber?: Subscriber | undefined) {
-        if (this.observers.has(observer.key)) {
+        const map = this.observers.get(observer.key);
+        if (map && map.initialized) {
             return;
         }
 
@@ -100,6 +103,7 @@ export class Store<TAppState = {}> {
         this.observers.set(observer.key, 
             {
                 observer,
+                initialized: true,
                 subscribers: associatedSubscriber ? [associatedSubscriber] : []
             });
 
@@ -163,15 +167,25 @@ export class Store<TAppState = {}> {
     }
 
      /** @internal */
-    public getOrCreateObserver<TObserver extends Observer>(
+    public getOrCreateObserver<TObserver extends Observer, TArgs extends unknown[]>(
         key: string, 
         Observer: (new(...args: any) => TObserver),
-        observerArgs: any
+        observerArgs: TArgs | undefined,
     ) {
         let observer = this.observers.get(key)?.observer;
 
-        if (observer === undefined)
-            observer = new Observer(observerArgs);
+        if (observer === undefined) {
+            observer = observerArgs
+                ? new Observer(...observerArgs)
+                : new Observer();
+
+            this.observers.set(observer.key, 
+                {
+                    observer,
+                    initialized: false,
+                    subscribers: []
+                });
+        }
 
         return observer as TObserver;
     }

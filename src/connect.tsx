@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 // this type is used to calculate difference between Map function given
 // properties and the Props of given component
-type Omit<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
+export type OmitType<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
 
 /**
  * This is mixin function for creating React HOC that is used to hook on global
@@ -19,15 +19,20 @@ type Omit<T, U> = Pick<T, Exclude<keyof T, keyof U>>;
  * properties. If observer is used, it is also passed to map function, so
  * observer public functions can be used to map Props action to it
  */
-export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserver extends Observer>(
+export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserver extends Observer, TArgs extends unknown[]>(
     Comp: React.ComponentType<TProps>,
+    Observer: (new(...args: [...TArgs]) => TObserver) | undefined,
     map: (store: Store<TAppState>, middleware: TObserver | undefined) => TRes,
-    Observer: (new(...args: any) => TObserver) | undefined) : React.FunctionComponent<Omit<TProps, TRes>> {
-        return (props: Omit<TProps, TRes>) => {
+    observerArgs: ((store: Store<TAppState>, props: OmitType<TProps, TRes>) => TArgs) | undefined,
+    ) : React.FunctionComponent<OmitType<TProps, TRes>> {
+        return (props: OmitType<TProps, TRes>) => {
             
             const store = useStoreProvider();
             const observer = React.useRef<TObserver| undefined>(Observer
-                ? store.getOrCreateObserver(Observer.name ?? "", Observer, props)
+                ? store.getOrCreateObserver(
+                    Observer.name ?? "", 
+                    Observer, 
+                    observerArgs ? observerArgs(store, props) : undefined)
                 : undefined);
             const subscriber = React.useRef<Subscriber>();
             const [ state, setState ] = React.useState<TRes>(map(store, observer.current))
@@ -50,7 +55,7 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
                 return () => {
                     store.removeSubscriber(subscriber.current!);
                 };
-            }, []);
+            }, [store]);
 
             const newProps = { ...props, ...state } as any;
 

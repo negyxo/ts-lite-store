@@ -2,7 +2,6 @@
  * Determines whether the given value is an object but not array or date.
  * @param target any type
  */
-
 function isPlainObject(obj: any) {
     if (obj && obj.constructor && obj.constructor.toString) {
         const parts = obj.constructor.toString().split(" ");
