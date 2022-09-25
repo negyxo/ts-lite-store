@@ -26,7 +26,15 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
     observerArgs: ((store: Store<TAppState>, props: OmitType<TProps, TRes>) => TArgs) | undefined,
     ) : React.FunctionComponent<OmitType<TProps, TRes>> {
         return (props: OmitType<TProps, TRes>) => {
-            
+            // Normally, we don't use ref to hold for a state, but in some
+            // edge cases react doesn't return the last state after setState 
+            // is called, which in some cases leads to miss in detection of
+            // store change, and then underlayign component is never updated,
+            // so in order to mitigate this issue, we store the state in hooks
+            // and in this ref, basically we now have on two places the state
+            // of the component, and this one is used only to check changes 
+            // between last state and new incoming state (map function for store)
+            const lastState = React.useRef<TRes | undefined>(undefined)
             const store = useStoreProvider();
             const observer = React.useRef<TObserver| undefined>(Observer
                 ? store.getOrCreateObserver(
@@ -39,7 +47,8 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
 
             const stateChanged = () => {
                 const newState = map(store, observer.current);
-                if (!areEqualShallow(newState, state)) {
+                if (!areEqualShallow(newState, lastState)) {
+                    lastState.current = state;
                     setState(newState)
                 }
             }

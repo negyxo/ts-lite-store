@@ -1,8 +1,8 @@
 {
   "name": "ts-lite-store",
-  "version": "1.0.46",
+  "version": "1.0.48",
   "scripts": {
-    "build": "npm run clean && npm run copy && tsc -p .",
+    "build": "tsc -p .",
     "clean": "del /Q /S lib",
     "copy": "xcopy package.json lib\\package.json",
     "test": "mocha --require ts-node/register test/**/*.ts"
