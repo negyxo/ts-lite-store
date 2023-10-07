@@ -1,11 +1,12 @@
 {
   "name": "ts-lite-store",
-  "version": "1.0.48",
+  "version": "2.0.0",
   "scripts": {
     "build": "tsc -p .",
-    "clean": "del /Q /S lib",
-    "copy": "xcopy package.json lib\\package.json",
-    "test": "mocha --require ts-node/register test/**/*.ts"
+    "clean": "rm -rf lib",
+    "copy": "cp package.json lib/package.json",
+    "test": "mocha --require ts-node/register test/**/*.ts",
+    "publish_to_npm": "npm run clean && npm run build && npm run copy && cd lib && npm publish"
   },
   "bugs": {
     "url": "https://github.com/negyxo/ts-lite-store.git"
@@ -21,17 +22,17 @@
   ],
   "author": "Aleksandar Perkucin",
   "license": "MIT",
+  "dependencies": {
+    "@types/react": "^18.2.25",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.6",
     "chai": "^4.2.0",
     "mocha": "^6.0.0",
     "ts-node": "^8.0.2",
-    "typescript": "^4.5.4"
-  },
-  "dependencies": {
-    "@types/react": "^17.0.37",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "typescript": "^5.2.2"
   }
 }

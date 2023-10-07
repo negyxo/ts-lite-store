@@ -256,7 +256,7 @@ export class Store<TAppState = {}> {
             }
         }
 
-        return newState;
+        return newState as DeepPartial<TAppState>;
     }
 
     private runMutableObserversInternal(state: TAppState, oldState: TAppState): DeepPartial<TAppState> | undefined {
