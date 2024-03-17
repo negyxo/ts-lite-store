@@ -45,9 +45,9 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
             const subscriber = React.useRef<Subscriber>();
             const [ state, setState ] = React.useState<TRes>(map(store, observer.current))
 
-            const stateChanged = () => {
+            const stateChanged = (force: boolean) => {
                 const newState = map(store, observer.current);
-                if (!areEqualShallow(newState, lastState)) {
+                if (force || !areEqualShallow(newState, lastState)) {
                     lastState.current = state;
                     setState(newState)
                 }
@@ -55,7 +55,7 @@ export function connect<TAppState, TProps, TRes extends Partial<TProps>, TObserv
 
             useEffect(() => {
                 subscriber.current = store.createSubscriber();
-                subscriber.current.stateChanged.on(() => stateChanged());
+                subscriber.current.stateChanged.on(e => stateChanged(e.force));
 
                 if (observer.current) {
                     subscriber.current.registerObserver(observer.current);

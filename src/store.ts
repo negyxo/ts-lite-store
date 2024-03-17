@@ -99,7 +99,7 @@ export class Store<TAppState = {}> {
             return;
         }
 
-        observer.initializeObserver(this.state, s => this.update(s));
+        observer.initializeObserver(this.state, s => this.update(s), () =>  this.triggerStateChanged(true));
         this.observers.set(observer.key, 
             {
                 observer,
@@ -190,8 +190,8 @@ export class Store<TAppState = {}> {
         return observer as TObserver;
     }
 
-    private triggerStateChanged() {
-        this.subscribers.forEach(p => p.signalStateChanged(this.stateInternal));
+    private triggerStateChanged(force: boolean = false) {
+        this.subscribers.forEach(p => p.signalStateChanged(this.stateInternal, force));
     }
 
     private resolveFetchFunctions(

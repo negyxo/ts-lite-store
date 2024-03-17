@@ -21,7 +21,7 @@ export class Subscriber<TAppState = any> {
     /**
      *  Signals that global (store's) TAppState is changed
      */
-    public stateChanged: LiteEvent<TAppState>;
+    public stateChanged: LiteEvent<{ state: TAppState, force: boolean }>;
 
     /**
      * Registers Observer object to the store. Note: When Observer is registered
@@ -35,7 +35,7 @@ export class Subscriber<TAppState = any> {
     }
 
     /** @internal */
-    public signalStateChanged(newState: TAppState) {
-        this.stateChanged.trigger(newState);
+    public signalStateChanged(newState: TAppState, force: boolean = false) {
+        this.stateChanged.trigger({ state: newState, force });
     }
 }

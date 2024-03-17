@@ -1,6 +1,6 @@
 {
   "name": "ts-lite-store",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "scripts": {
     "build": "tsc -p .",
     "clean": "rm -rf lib",

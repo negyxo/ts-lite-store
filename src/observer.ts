@@ -1,4 +1,5 @@
 import { DeepPartial } from "./deep.partial";
+import { merge } from "./merge";
 
 export type ObservableFunc<TAppState> =
     (state: TAppState, oldState?: TAppState) => DeepPartial<TAppState> | Promise<void> | void;
@@ -11,9 +12,10 @@ interface IObservableMethod<TAppState> {
 /**
  * Observer class used to listen for changes for some store's part.
  */
-export class Observer<TAppState = any> {
+export class Observer<TAppState = any, TLocalState = any> {
     constructor() {
-        this.key = this.constructor.name
+        this.key = this.constructor.name;
+        this._localState = this.getInitalLocalState();
         this.registerObserver(
             s => this.setState(s),
             c => c,
@@ -39,7 +41,10 @@ export class Observer<TAppState = any> {
 
     private destuctors: Array<() => void> = [];
     private updateRequest!: ((state: DeepPartial<TAppState>) => void);
+    private localUpdateRequest!: (() => void);
     private stateInternal!: TAppState;
+
+    private _localState: TLocalState;
 
     private _disposed = false;
     private initialState: ObservableFunc<TAppState> | undefined;
@@ -102,14 +107,19 @@ export class Observer<TAppState = any> {
         return this.stateInternal!;
     }
 
+    get localState() {
+        return this._localState;
+    }
+
     public setInitialState(func: (currentState: TAppState) => DeepPartial<TAppState>) {
         this.initialState = func;
     }
 
     /** @internal */
-    public initializeObserver(state: TAppState, updateRequest: (state: DeepPartial<TAppState>) => void) {
+    public initializeObserver(state: TAppState, updateRequest: (state: DeepPartial<TAppState>) => void, localUpdateRequest: () => void) {
         this.stateInternal = state;
         this.updateRequest = updateRequest;
+        this.localUpdateRequest = localUpdateRequest;
     }
 
       /** @internal */
@@ -170,5 +180,15 @@ export class Observer<TAppState = any> {
     public signalDestuctors() {
         this._disposed = true;
         this.destuctors.forEach(p => p());
+    }
+
+    protected updateLocalState(state: DeepPartial<TLocalState>) {
+        const tempState = merge(this._localState, state);
+        this._localState = tempState as TLocalState;
+        this.localUpdateRequest();
+    }
+
+    protected getInitalLocalState(): TLocalState {
+        return {} as TLocalState;
     }
 }
